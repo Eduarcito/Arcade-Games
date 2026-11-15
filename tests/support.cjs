@@ -6,7 +6,7 @@ function harness({legacy=false,app=false}={}){
   let seed=73,nextId=0,now=0;
   const random=()=>{seed=seed*16807%2147483647;return (seed-1)/2147483646};
   const frames=new Map(),timers=new Map(),lastBall={x:240,y:280};
-  const ctx={fillStyle:'',fillRect(x,y,w,h){for(const n of [x,y,w,h])assert.ok(Number.isFinite(n),'Coordenadas finitas');if(this.fillStyle==='#ffffff'||this.fillStyle==='#fff3cf'){lastBall.x=x+w/2;lastBall.y=y+h/2}},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},arc(){},fill(){}};
+  const ctx={fillStyle:'',fillRect(x,y,w,h){for(const n of [x,y,w,h])assert.ok(Number.isFinite(n),'Coordenadas finitas');if(this.fillStyle==='#ffffff'||this.fillStyle==='#fff3cf'){lastBall.x=x+w/2;lastBall.y=y+h/2}},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},strokeRect(){},arc(){},fill(){}};
   class Element{
     constructor(tag='DIV'){this.events=new Map();this.children=[];this.nodes=new Map();this.tagName=tag;this.dataset={};this.value='';this.style={};this.textContent='';this.innerHTML='';this.open=false;this.classes=new Set();this.classList={add:(v)=>this.classes.add(v),remove:v=>this.classes.delete(v),contains:v=>this.classes.has(v),toggle:v=>{this.classes.has(v)?this.classes.delete(v):this.classes.add(v)}};this.bounds={left:0,top:0,width:480,height:560};}
     set innerHTML(value){this.html=value;this.children=[];this.nodes?.clear()}
@@ -35,9 +35,9 @@ function harness({legacy=false,app=false}={}){
   const localStorage=new Map();
   const sandbox={window,document,Math:math,Set,console,performance:{now:()=>now},localStorage:{getItem:k=>localStorage.get(k)||null,setItem:(k,v)=>localStorage.set(k,v)},setTimeout:timeout,clearTimeout:id=>timers.delete(id),setInterval:(fn,ms)=>timeout(fn,ms,true),clearInterval:id=>timers.delete(id),requestAnimationFrame(fn){const id=++nextId;frames.set(id,fn);return id},cancelAnimationFrame:id=>frames.delete(id)};
   vm.createContext(sandbox);
-  for(const name of ['input','snake','mines','retro','screen',...(app?['app']:[])]){
+  for(const name of ['input','snake','mines','powerups','retro','screen',...(app?['app']:[])]){
     let source=fs.readFileSync(path.join(__dirname,'../public/'+name+'.js'),'utf8');
-    if(name==='retro')source=source.replace('window.ArcadiaRetro={games:collection,mount};','window.ArcadiaRetro={games:collection,mount,shooter,breaker,pong};').replace('const env = {ctx,state,beep,burst,finish,points,hud};','window.testState=state;const env = {ctx,state,beep,burst,finish,points,hud};').replace("const game = id==='galaxy'||id==='invaders'?shooter(env,id==='invaders'):id==='breakout'?breaker(env):pong(env);","const game = id==='galaxy'||id==='invaders'?shooter(env,id==='invaders'):id==='breakout'?breaker(env):pong(env);window.testGame=game;");
+    if(name==='retro')source=source.replace('const armory=window.ArcadiaPowerups.create();','const armory=window.ArcadiaPowerups.create();window.testArmory=armory;').replace('return {update,draw,control:()=>({x:player.x,y:player.y})};','return {update,draw,control:()=>({x:player.x,y:player.y}),inspect:()=>({bullets,foes,enemies,shields,player})};').replace('window.ArcadiaRetro={games:collection,mount};','window.ArcadiaRetro={games:collection,mount,shooter,breaker,pong};').replace('const env = {ctx,state,beep,burst,finish,points,hud};','window.testState=state;const env = {ctx,state,beep,burst,finish,points,hud};').replace("const game = id==='galaxy'||id==='invaders'?shooter(env,id==='invaders'):id==='breakout'?breaker(env):pong(env);","const game = id==='galaxy'||id==='invaders'?shooter(env,id==='invaders'):id==='breakout'?breaker(env):pong(env);window.testGame=game;");
     vm.runInContext(source,sandbox,{filename:name+'.js'});
   }
   const state={running:true,paused:false,ended:false,time:0,keys:new Set(),pointer:null,touching:false,points:0,lives:3,level:1,firePulse:0};

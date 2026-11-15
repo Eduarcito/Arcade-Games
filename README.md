@@ -46,6 +46,17 @@ Toca y arrastra sobre el tablero para iniciar. En computadora, enfoca el tablero
 
 Snake reconoce deslizamientos continuos en las cuatro direcciones, incluso sin levantar el dedo, y conserva hasta dos giros rápidos. 2048 realiza un movimiento por deslizamiento. En Buscaminas toca para descubrir y mantén pulsado medio segundo para marcar una bandera; un arrastre cancela la selección. Los controles direccionales y de disparo en pantalla se sustituyeron por gestos; se mantienen pausa, reinicio y sonido.
 
+## Poderes de las naves
+
+En Escuadrón Galáctico e Invasores Cósmicos cae una cápsula cada cuatro enemigos destruidos. Recógela con la nave; no hace falta pulsar otro botón.
+
+- **T · Triple:** tres proyectiles en abanico.
+- **R · Ráfaga:** disparo doble con mayor cadencia.
+- **L · Láser:** atraviesa hasta tres enemigos e inflige doble daño.
+- **E · Escudo:** absorbe un impacto.
+
+Los poderes duran 12 segundos y tienen una barra de tiempo dentro del tablero. Una nueva arma sustituye a la anterior; recoger la misma renueva su duración. El escudo se combina con cualquier arma. La pausa detiene los temporizadores y las cápsulas; cambiar de oleada conserva las mejoras. Perder una vida elimina las mejoras activas y reiniciar comienza sin poderes.
+
 ## Vista de juego
 
 Los diez juegos se abren ocupando toda la ventana. Las descripciones y ayudas no aparecen durante la partida. Una barra compacta permite cerrar, reiniciar, pausar y activar sonido, según el juego. Los tableros se adaptan a la superficie disponible; los canvas se amplían sin recorte ni deformación. La rotación o los cambios de tamaño conservan la partida.
@@ -62,6 +73,7 @@ public/           HTML, CSS, JavaScript e icono que sirve Vercel
   input.js        Gestos de un dedo, con captura y cancelación
   mines.js        Buscaminas con pulsación prolongada y primera jugada segura
   snake.js        Snake con cola de giros y controles táctiles
+  powerups.js     Cápsulas, armas temporales y escudo de las naves
   retro.js        Motor y cuatro juegos arcade nuevos
 scripts/serve.cjs  Servidor local sin dependencias
 tests/            Pruebas de las reglas y del ciclo de vida de los juegos
