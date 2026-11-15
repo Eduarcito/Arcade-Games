@@ -6,7 +6,7 @@ const games=[
  {id:'memory',name:'Memoria',category:'Memoria',desc:'Encuentra las parejas. Confía en tu mente.',time:'2–4 min',color:'#e5d1e2',art:'<div class="mini-memory"><b>✿</b><b>?</b><b>✿</b></div>',instructions:'Descubre las ocho parejas en el menor número de movimientos. Toca dos cartas para darles la vuelta.'},
  {id:'mines',name:'Buscaminas',category:'Lógica',desc:'Cada casilla es una pequeña decisión.',time:'3–6 min',color:'#cddfda',art:'<div class="mini-mines">'+['','1','','⚑','1','2','','','', '✹','1',''].map(n=>'<b>'+n+'</b>').join('')+'</div>',instructions:'Hay 6 minas. Toca una casilla para descubrirla; mantén pulsado para poner o quitar una bandera. Los números indican minas vecinas. Primera casilla segura. En computadora: clic derecho o tecla F para marcar.'},
  {id:'ttt',name:'Tres en raya',category:'Lógica',desc:'Tú, un rival y nueve posibilidades.',time:'1–2 min',color:'#efd7c5',art:'<div class="mini-xo">× ○ ×<br>○ × ○<br>× ○ ·</div>',instructions:'Juegas con X contra la computadora. Completa una línea de tres antes que tu rival.'},
- {id:'reaction',name:'Reflejos',category:'Reflejos',desc:'Espera el verde. Demuestra tu rapidez.',time:'< 1 min',color:'#dcdbeb',tag:'PONTE A PRUEBA',art:'<div class="mini-reflex">ϟ</div>',instructions:'Pulsa para comenzar. Espera a que el panel se ponga verde y pulsa lo más rápido que puedas. ¡No te adelantes!'}
+ {id:'reaction',name:'Reflejos',category:'Reflejos',desc:'Espera el verde. Demuestra tu rapidez.',time:'< 1 min',color:'#dcdbeb',tag:'PONTE A PRUEBA',art:'<div class="mini-reflex">ϟ</div>',instructions:'Toca el panel o pulsa una tecla para comenzar. Espera el verde y vuelve a tocar o pulsar lo más rápido que puedas. No mantengas la tecla presionada. ¡No te adelantes!'}
 ];
 let saved={favorites:[],records:{}};try{const s=JSON.parse(localStorage.getItem('arcadia-v1'));if(s&&Array.isArray(s.favorites)&&s.records&&typeof s.records==='object')saved=s}catch{}
 function persist(){try{localStorage.setItem('arcadia-v1',JSON.stringify(saved))}catch{}}
@@ -33,5 +33,35 @@ function startMines(){cleanup=window.ArcadiaMines.mount($('#play-area'),{score,s
 const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 function winner(b){for(const [a,c,d]of wins)if(b[a]&&b[a]===b[c]&&b[a]===b[d])return b[a];return b.every(Boolean)?'draw':null}
 function startTTT(){let b=Array(9).fill(''),locked=false,ended=false;const el=document.createElement('div');el.className='board ttt-board';$('#play-area').append(el);function draw(){el.innerHTML=b.map((v,i)=>`<button data-i="${i}" aria-label="Casilla ${i+1}${v?': '+v:''}" ${v||locked||ended?'disabled':''}>${v==='X'?'×':v==='O'?'○':''}</button>`).join('')}function check(){const w=winner(b);if(w){ended=true;if(w==='X'){record((saved.records.ttt||0)+1);status('¡Ganaste! Tres en raya.')}else status(w==='draw'?'Empate. ¡Una revancha!':'La computadora gana. ¿Probamos otra vez?');draw();return true}return false}function bot(){const empty=b.map((v,i)=>v?null:i).filter(i=>i!==null);let next;for(const symbol of ['O','X']){next=empty.find(i=>{b[i]=symbol;const won=winner(b)===symbol;b[i]='';return won});if(next!==undefined)break}if(next===undefined)next=!b[4]?4:empty[Math.floor(Math.random()*empty.length)];b[next]='O';locked=false;if(!check())status('Tu turno · X');draw()}el.onclick=e=>{const btn=e.target.closest('[data-i]');if(!btn||locked||ended)return;const i=Number(btn.dataset.i);if(b[i])return;b[i]='X';if(check())return;locked=true;status('La computadora está pensando…');draw();later(bot,400)};draw();score('Tú: X · Computadora: O');$('#record').textContent='Victorias: '+(saved.records.ttt||0);status('Tu turno · X')}
-function startReaction(){let phase='idle',start=0,timeout;const btn=document.createElement('button');btn.className='reaction';btn.textContent='ϟ Pulsa para empezar';$('#play-area').append(btn);score('Tiempo en milisegundos');const react=()=>{if(phase==='idle'||phase==='done'){phase='waiting';btn.className='reaction waiting';btn.textContent='Espera el verde…';status('Con calma. Todavía no.');timeout=later(()=>{phase='ready';btn.className='reaction ready';btn.textContent='¡AHORA!';start=performance.now();status('¡Pulsa!')},1800+Math.random()*3000)}else if(phase==='waiting'){clearTimeout(timeout);phase='done';btn.className='reaction';btn.textContent='Demasiado pronto. Toca para repetir.';status('Espera a que el panel cambie a verde.')}else if(phase==='ready'){const ms=Math.round(performance.now()-start);phase='done';record(ms,true);btn.className='reaction';btn.textContent=ms+' ms · ¡Otra vez!';status(ms<250?'¡Reflejos de campeonato!':'¡Buen intento! Prueba a superar tu marca.')}};const contact=window.ArcadiaInput.track(btn,{start(){react()}});btn.onclick=e=>{if(e.detail===0)react()};function hidden(){if(document.hidden&&(phase==='waiting'||phase==='ready')){clearTimeout(timeout);phase='idle';btn.className='reaction';btn.textContent='Pulsa para empezar';status('Ronda cancelada al cambiar de pestaña.')}}document.addEventListener('visibilitychange',hidden);cleanup=()=>{contact.destroy();document.removeEventListener('visibilitychange',hidden)}}
+function startReaction(){
+  let phase='idle',start=0,timeout;
+  const btn=document.createElement('button');
+  const prompt='ϟ Toca o pulsa una tecla';
+  btn.className='reaction';btn.textContent=prompt;
+  $('#play-area').append(btn);score('Tiempo en milisegundos');
+  const react=()=>{
+    if(phase==='idle'||phase==='done'){
+      phase='waiting';btn.className='reaction waiting';btn.textContent='Espera el verde…';status('Con calma. Todavía no.');
+      timeout=later(()=>{phase='ready';btn.className='reaction ready';btn.textContent='¡AHORA!';start=performance.now();status('¡Toca o pulsa una tecla!')},1800+Math.random()*3000);
+    }else if(phase==='waiting'){
+      clearTimeout(timeout);phase='done';btn.className='reaction';btn.textContent='Demasiado pronto. Pulsa para repetir.';status('Espera a que el panel cambie a verde.');
+    }else if(phase==='ready'){
+      const ms=Math.round(performance.now()-start);phase='done';record(ms,true);btn.className='reaction';btn.textContent=ms+' ms · ¡Otra vez!';status(ms<250?'¡Reflejos de campeonato!':'¡Buen intento! Prueba a superar tu marca.');
+    }
+  };
+  onKey=e=>{
+    // Conserva la navegación, los atajos del navegador y los controles del juego.
+    if(document.hidden||e.defaultPrevented||e.isComposing||e.key==='Tab'||e.key==='Escape'||e.ctrlKey||e.altKey||e.metaKey)return;
+    const target=e.target;
+    if(target?.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target?.tagName))return;
+    if(target?.tagName==='BUTTON'&&target!==btn&&(e.key==='Enter'||e.key===' '))return;
+    e.preventDefault(); // Evita scroll y el clic nativo de Espacio/Enter en el panel.
+    if(!e.repeat)react();
+  };
+  const contact=window.ArcadiaInput.track(btn,{start(){react()}});
+  btn.onclick=e=>{if(e.detail===0)react()};
+  function hidden(){if(document.hidden&&(phase==='waiting'||phase==='ready')){clearTimeout(timeout);phase='idle';btn.className='reaction';btn.textContent=prompt;status('Ronda cancelada al cambiar de pestaña.')}}
+  document.addEventListener('visibilitychange',hidden);
+  cleanup=()=>{contact.destroy();document.removeEventListener('visibilitychange',hidden)};
+}
 render();

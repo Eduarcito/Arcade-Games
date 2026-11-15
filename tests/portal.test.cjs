@@ -41,6 +41,37 @@ test('Reflejos: salida anticipada, cambio de pestaña y reinicio no dejan rondas
   const h=harness({app:true});open(h,'reaction');let panel=get(h,'#play-area').children[0];h.pointer(panel,'pointerdown',20,20);h.pointer(panel,'pointerup',20,20);h.pointer(panel,'pointerdown',20,20);assert.match(panel.textContent,/Demasiado pronto/);assert.equal(h.timers.size,0);h.pointer(panel,'pointerup',20,20);
   h.pointer(panel,'pointerdown',20,20);h.pointer(panel,'pointerup',20,20);h.document.hidden=true;h.document.dispatch('visibilitychange');assert.equal(h.timers.size,0);assert.match(get(h,'#status').textContent,/cancelada/);open(h,'reaction');assert.equal(h.timers.size,0);
 });
+
+test('Reflejos: letras, números, flechas, Enter y Espacio miden al presionar y no al soltar',()=>{
+  for(const key of ['a','7','ArrowLeft','Enter',' ','Shift','/']){
+    const h=harness({app:true});open(h,'reaction');const panel=get(h,'#play-area').children[0];
+    const press=(repeat=false)=>h.document.dispatch('keydown',{key,repeat,target:panel});
+    assert.equal(press().defaultPrevented,true);assert.match(panel.textContent,/Espera/);
+    press(true);assert.match(panel.textContent,/Espera/,'Mantener la tecla no provoca salida anticipada');
+    const green=[...h.timers.values()][0].at;h.advance(green+137);
+    press(true);assert.equal(panel.textContent,'¡AHORA!');assert.equal(h.eval('saved.records.reaction'),undefined);
+    assert.equal(press().defaultPrevented,true);assert.equal(h.eval('saved.records.reaction'),137);
+    press(true);h.advance(h.now()+300);h.document.dispatch('keyup',{key,target:panel});
+    assert.match(panel.textContent,/137 ms/);assert.equal(h.timers.size,0);
+  }
+});
+
+test('Reflejos: teclado detecta una salida anticipada y se desactiva al cerrar o cambiar de juego',()=>{
+  const h=harness({app:true});open(h,'reaction');const panel=get(h,'#play-area').children[0];
+  const press=()=>h.document.dispatch('keydown',{key:'x',target:panel});
+  press();press();assert.match(panel.textContent,/Demasiado pronto/);assert.equal(h.timers.size,0);
+  press();const before=panel.textContent;get(h,'#close-game').onclick();press();assert.equal(panel.textContent,before);assert.equal(h.timers.size,0);
+  open(h,'memory');press();assert.equal(h.timers.size,0);
+  open(h,'reaction');press();assert.equal(h.timers.size,1,'Reabrir no duplica la entrada');
+});
+
+test('Reflejos conserva navegación, atajos, campos editables y activación de cerrar/reiniciar',()=>{
+  const h=harness({app:true});open(h,'reaction');const panel=get(h,'#play-area').children[0];
+  for(const options of [{key:'Tab'},{key:'Escape'},{key:'r',ctrlKey:true},{key:'l',metaKey:true},{key:'ArrowLeft',altKey:true},{key:'a',isComposing:true},{key:'a',target:{tagName:'INPUT'}},{key:'a',target:{isContentEditable:true}},{key:'Enter',target:get(h,'#close-game')},{key:' ',target:get(h,'#restart')}]){
+    const e=h.document.dispatch('keydown',{target:panel,...options});assert.equal(e.defaultPrevented,undefined);assert.equal(h.timers.size,0);
+  }
+  h.document.hidden=true;h.document.dispatch('keydown',{key:'a',target:panel});assert.equal(h.timers.size,0);
+});
 test('Buscaminas y Tres en raya mantienen el contador de victorias al actualizar récords',()=>{
   const h=harness({app:true});open(h,'mines');assert.equal(get(h,'#record').textContent,'Victorias: 0');h.eval('record(1)');assert.equal(get(h,'#record').textContent,'Victorias: 1');open(h,'ttt');h.eval('record(2)');assert.equal(get(h,'#record').textContent,'Victorias: 2');
 });
