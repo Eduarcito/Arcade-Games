@@ -53,7 +53,7 @@
     }
     function sync() {
       if(s.points!==oldPoints){api.score('Puntos: '+s.points);if(s.points>0)api.record(s.points);oldPoints=s.points;}
-      pauseButton.disabled=!s.started||s.dead;pauseButton.textContent=s.paused?'Continuar':'Pausar';
+      pauseButton.disabled=!s.started||s.dead;pauseButton.textContent=s.paused?'Continuar':'Pausar';pauseButton.setAttribute('aria-pressed',String(s.paused));
       api.status(s.dead?(s.won?'¡Tablero completo!':`Fin de partida · ${s.points} puntos.`):s.paused?'En pausa. Desliza para continuar.':s.started?'Desliza para cambiar de dirección.':'Desliza en cualquier dirección para comenzar.');
       draw();
     }

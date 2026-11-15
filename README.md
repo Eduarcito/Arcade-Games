@@ -46,11 +46,19 @@ Toca y arrastra sobre el tablero para iniciar. En computadora, enfoca el tablero
 
 Snake reconoce deslizamientos continuos en las cuatro direcciones, incluso sin levantar el dedo, y conserva hasta dos giros rápidos. 2048 realiza un movimiento por deslizamiento. En Buscaminas toca para descubrir y mantén pulsado medio segundo para marcar una bandera; un arrastre cancela la selección. Los controles direccionales y de disparo en pantalla se sustituyeron por gestos; se mantienen pausa, reinicio y sonido.
 
+## Vista de juego
+
+Los diez juegos se abren ocupando toda la ventana. Las descripciones y ayudas no aparecen durante la partida. Una barra compacta permite cerrar, reiniciar, pausar y activar sonido, según el juego. Los tableros se adaptan a la superficie disponible; los canvas se amplían sin recorte ni deformación. La rotación o los cambios de tamaño conservan la partida.
+
+Se solicita pantalla completa nativa cuando el navegador la permite. Si no está disponible (por ejemplo, en algunas versiones de Safari de iPhone), el juego ocupa toda el área visible de la página; las barras del navegador pueden permanecer. No se bloquea la orientación ni el zoom del navegador.
+
 ## Estructura
 
 ```text
 public/           HTML, CSS, JavaScript e icono que sirve Vercel
   app.js          Catálogo, favoritos, récords y los seis juegos iniciales
+  screen.js       Pantalla de juego completa y ajuste al espacio disponible
+  game-screen.css Vista inmersiva y controles compactos
   input.js        Gestos de un dedo, con captura y cancelación
   mines.js        Buscaminas con pulsación prolongada y primera jugada segura
   snake.js        Snake con cola de giros y controles táctiles

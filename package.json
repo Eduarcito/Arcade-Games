@@ -1,12 +1,12 @@
 {
   "name": "arcadia-arcade-games",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "Diez minijuegos para el navegador, con una colección arcade retro.",
   "scripts": {
     "start": "node scripts/serve.cjs",
     "dev": "node scripts/serve.cjs",
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check public/input.js && node --check public/mines.js && node --check public/snake.js && node --check public/app.js && node --check public/retro.js"
+    "check": "node --check public/screen.js && node --check public/input.js && node --check public/mines.js && node --check public/snake.js && node --check public/app.js && node --check public/retro.js"
   }
 }

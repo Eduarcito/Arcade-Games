@@ -58,7 +58,7 @@
       if(state.ended)overlay(finalMessage,'REINICIAR PARA VOLVER A JUGAR');else if(!state.running)overlay('TOCA Y DESLIZA','O USA LAS FLECHAS DEL TECLADO');else if(state.paused)overlay('PAUSA','TOCA EL TABLERO PARA CONTINUAR');
       frame=requestAnimationFrame(loop);
     }
-    function setPaused(value) {if(!state.running||state.ended)return;gesture?.cancel();state.paused=value;state.keys.clear();state.pointer=null;state.touching=false;pause.textContent=value?'▶ Continuar':'Ⅱ Pausar';api.status(value?'En pausa. Toca el tablero para continuar.':'¡A jugar!');last=undefined;}
+    function setPaused(value) {if(!state.running||state.ended)return;gesture?.cancel();state.paused=value;state.keys.clear();state.pointer=null;state.touching=false;pause.textContent=value?'▶ Continuar':'Ⅱ Pausar';pause.setAttribute('aria-pressed',String(value));api.status(value?'En pausa. Toca el tablero para continuar.':'¡A jugar!');last=undefined;}
     function beginPlay(){if(state.ended)return false;if(state.paused)setPaused(false);if(!state.running){state.running=true;pause.disabled=false;api.status('¡A jugar!');last=undefined;}return true;}
     pause.onclick=()=>setPaused(!state.paused);
     sound.onclick=async()=>{audible=!audible;if(audible){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!audio)audio=new Audio();await audio.resume();}catch{audible=false;api.status('El sonido no está disponible en este navegador.')}}if(disposed)return;sound.textContent='♪ Sonido: '+(audible?'sí':'no');sound.setAttribute('aria-pressed',String(audible));beep(620);};

@@ -1,0 +1,34 @@
+/* Todos los juegos usan toda la ventana, con un HUD compacto y sin descripción. */
+html.game-open,html.game-open body{overflow:hidden;overscroll-behavior:none}
+#game-modal{position:fixed;inset:0;width:100%;max-width:none;height:100%;height:100dvh;max-height:none;margin:0;padding:0;border:0;border-radius:0;overflow:hidden;box-shadow:none;background:#edf1e6;color:#183b30}
+#game-modal::backdrop{background:#090f20;backdrop-filter:none}
+#game-surface{width:100%;height:100%;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;background:inherit;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);box-sizing:border-box}
+#game-surface:fullscreen{width:100vw;height:100vh;height:100dvh;background:#edf1e6}
+#game-modal[data-layout="arcade"],#game-modal[data-layout="arcade"] #game-surface{background:#090f20;color:#e1eccf}
+#game-modal[data-layout="snake"],#game-modal[data-layout="snake"] #game-surface{background:#142e25;color:#e1eccf}
+#game-modal .game-toolbar{display:flex;flex:0 0 auto;align-items:center;gap:6px;min-height:48px;padding:2px 6px;background:#173e31;color:#f1f6df;position:relative;z-index:2}
+#game-modal #game-actions{display:flex;gap:4px;flex:0 0 auto}
+#game-modal .game-toolbar button{display:grid;place-items:center;flex:0 0 auto;width:42px;height:42px;min-height:42px;padding:0;margin:0;border:0;border-radius:8px;background:#ffffff12;color:inherit;font-size:24px;line-height:1;cursor:pointer}
+#game-modal .game-toolbar button:hover{background:#ffffff28}
+#game-modal .game-toolbar button:disabled{opacity:.35;cursor:default}
+#game-modal #score{min-width:0;flex:1;text-align:center;font-size:12px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+#game-modal .game-toolbar .arcade-pause,#game-modal .game-toolbar .game-pause,#game-modal .game-toolbar .arcade-sound{font-size:0}
+#game-modal .arcade-pause::after,#game-modal .game-pause::after{content:'Ⅱ';font-size:23px}
+#game-modal .arcade-pause[aria-pressed="true"]::after,#game-modal .game-pause[aria-pressed="true"]::after{content:'▶';font-size:19px}
+#game-modal .arcade-sound::after{content:'♪';font-size:24px;opacity:.45}
+#game-modal .arcade-sound[aria-pressed="true"]::after{opacity:1;color:#d6ee8c}
+#game-modal .screen-reader-only,#game-modal #record,#game-modal #instructions,#game-modal #game-category,#game-modal #game-title{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#game-modal .gesture-hint,#game-modal .arcade-hint,#game-modal .arcade-toolbar{display:none!important}
+#game-modal #play-area{position:relative;display:flex;align-items:center;justify-content:center;flex:1 1 0;min-height:0;min-width:0;width:100%;height:auto;max-width:none;margin:0;padding:0;overflow:hidden}
+#game-modal .arcade-machine{display:flex;align-items:center;justify-content:center;width:100%;height:100%;max-width:none;min-height:0;margin:0}
+#game-modal #play-area canvas{display:block;flex:none;width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:auto;margin:0;border:0;border-radius:0;touch-action:none}
+#game-modal #play-area>.board{align-self:stretch;flex:1;min-width:0;min-height:0;width:100%;height:100%;margin:0;border-radius:0;gap:clamp(3px,.8vmin,10px);padding:clamp(3px,.8vmin,10px);grid-auto-rows:minmax(0,1fr)}
+#game-modal .board button,#game-modal .number-cell{aspect-ratio:auto;min-height:0;min-width:0;margin:0;padding:0;display:grid;place-items:center;border-radius:clamp(4px,1vmin,12px)}
+#game-modal .memory-board button{font-size:clamp(24px,7vmin,80px)}
+#game-modal .mines-board button{font-size:clamp(18px,5vmin,55px)}
+#game-modal .ttt-board button{font-size:clamp(42px,14vmin,150px)}
+#game-modal .number-cell{font-size:clamp(20px,6vmin,64px)!important}
+#game-modal .reaction{display:grid;place-items:center;width:100%;height:100%;min-height:0;border-radius:0;padding:24px;font-size:clamp(24px,6vmin,64px)}
+#game-modal #status{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:1;min-height:0;margin:0;padding:12px 16px;border-radius:10px;background:#173e31f0;color:#f1f6df;box-shadow:0 4px 20px #0002;font-size:14px;line-height:1.5;text-align:center;pointer-events:none}
+#game-modal #status:not([data-visible="true"]){width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media(max-width:380px){#game-modal .game-toolbar{gap:3px;padding:2px 3px}#game-modal #score{font-size:10px}#game-modal #game-actions{gap:2px}}
