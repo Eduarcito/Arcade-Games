@@ -13,10 +13,6 @@ html.game-open,html.game-open body{overflow:hidden;overscroll-behavior:none}
 #game-modal .game-toolbar button:disabled{opacity:.35;cursor:default}
 #game-modal #score{min-width:0;flex:1;text-align:center;font-size:12px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
 #game-modal .game-toolbar .arcade-pause,#game-modal .game-toolbar .game-pause,#game-modal .game-toolbar .arcade-sound{font-size:0}
-#game-modal .arcade-pause::after,#game-modal .game-pause::after{content:'Ⅱ';font-size:23px}
-#game-modal .arcade-pause[aria-pressed="true"]::after,#game-modal .game-pause[aria-pressed="true"]::after{content:'▶';font-size:19px}
-#game-modal .arcade-sound::after{content:'♪';font-size:24px;opacity:.45}
-#game-modal .arcade-sound[aria-pressed="true"]::after{opacity:1;color:#d6ee8c}
 #game-modal .screen-reader-only,#game-modal #record,#game-modal #instructions,#game-modal #game-category,#game-modal #game-title{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 #game-modal .gesture-hint,#game-modal .arcade-hint,#game-modal .arcade-toolbar{display:none!important}
 #game-modal #play-area{position:relative;display:flex;align-items:center;justify-content:center;flex:1 1 0;min-height:0;min-width:0;width:100%;height:auto;max-width:none;margin:0;padding:0;overflow:hidden}

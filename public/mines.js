@@ -20,34 +20,52 @@
   }
   function mount(host,api){
     const game=model(),s=game.state,board=document.createElement('div');board.className='board mines-board';
-    const hint=document.createElement('p');hint.className='gesture-hint';hint.textContent='Toca para descubrir · Mantén ½ segundo para poner o quitar una bandera.';host.append(board,hint);
-    let hold,selected=null,origin=null,held=false,moved=false,lastTouch=-Infinity;
+    const icons=window.ArcadiaIcons;
+    board.setAttribute('aria-label','Campo de Buscaminas, 6 por 6');
+    const controls=document.createElement('div');controls.className='mines-controls';
+    const revealButton=document.createElement('button'),flagButton=document.createElement('button');
+    for(const button of [revealButton,flagButton]){button.type='button';button.className='mines-mode';}
+    revealButton.innerHTML=icons.svg('mouse-pointer-2')+'<span>Descubrir</span>';
+    flagButton.innerHTML=icons.svg('flag')+'<span>Banderas</span><b class="mode-state">OFF</b>';
+    controls.setAttribute('role','group');controls.setAttribute('aria-label','Modo de juego');controls.append(revealButton,flagButton);
+    host.append(board,controls);
+    let hold,selected=null,origin=null,held=false,moved=false,lastTouch=-Infinity,flagMode=false;
     const finished=()=>s.phase==='won'||s.phase==='lost';
+    function syncMode(){
+      board.dataset.mode=flagMode?'flag':'reveal';
+      revealButton.setAttribute('aria-pressed',String(!flagMode));flagButton.setAttribute('aria-pressed',String(flagMode));
+      revealButton.setAttribute('aria-label','Descubrir casillas');flagButton.setAttribute('aria-label',flagMode?'Desactivar modo de banderas':'Activar modo de banderas');
+      flagButton.querySelector('.mode-state').textContent=flagMode?'ON':'OFF';
+      revealButton.disabled=finished();flagButton.disabled=finished();
+    }
     function draw(){
+      board.dataset.phase=s.phase;syncMode();
       board.innerHTML=Array.from({length:36},(_,i)=>{
         const open=s.opened.has(i),flag=s.flags.has(i),mine=s.mines.has(i),ended=finished();
         let value='',label='oculta',className='';
         if(open){value=game.count(i)||'';label=`${game.count(i)} minas vecinas`;className='open';}
-        if(flag){value='⚑';label='bandera';className='flagged';}
-        if(ended&&mine){value=s.phase==='won'?'⚑':'✹';label=s.phase==='won'?'mina marcada':'mina';className=s.exploded===i?'exploded':'mine';}
-        if(ended&&flag&&!mine){value='×';label='bandera incorrecta';className='wrong-flag';}
-        return `<button type="button" data-i="${i}" class="${className}" aria-label="Casilla ${i+1}, ${label}" ${ended?'disabled':''}>${value}</button>`;
+        if(flag){value=icons.svg('flag');label='bandera';className='flagged';}
+        if(ended&&mine){value=icons.svg(s.phase==='won'?'flag':'bomb');label=s.phase==='won'?'mina marcada':'mina';className=s.exploded===i?'exploded':s.phase==='won'?'flagged':'mine';}
+        if(ended&&flag&&!mine){value=icons.svg('x');label='bandera incorrecta';className='wrong-flag';}
+        return `<button type="button" data-i="${i}" data-count="${open?game.count(i):''}" class="${className}" aria-label="Casilla ${i+1}, ${label}" ${ended?'disabled':''}>${value}</button>`;
       }).join('');
       api.score(`Seguras: ${s.opened.size}/30 · Banderas: ${s.flags.size}/6`);
-      api.status(s.phase==='won'?'¡Campo despejado! Victoria.':s.phase==='lost'?'Encontraste una mina. Pulsa Reiniciar para volver a jugar.':s.phase==='ready'?'La primera casilla que descubras siempre es segura.':'Toca para descubrir. Mantén pulsado para marcar.');
+      api.status(s.phase==='won'?'¡Campo despejado! Victoria.':s.phase==='lost'?'Encontraste una mina. Pulsa Reiniciar para volver a jugar.':flagMode?'Banderas activadas. Toca una casilla para poner o quitar una bandera.':s.phase==='ready'?'La primera casilla que descubras siempre es segura.':'Toca para descubrir. Mantén pulsado para marcar.');
     }
     function act(i,flag){const before=s.phase;if(!game.act(i,flag))return;if(before!=='won'&&s.phase==='won')api.victory();draw();}
     function clearHold(){clearTimeout(hold);hold=null;board.classList.remove('holding');}
     const contact=window.ArcadiaInput.track(board,{
-      start(p){const cell=p.target.closest?.('[data-i]');if(!cell||finished())return false;selected=Number(cell.dataset.i);origin=p;held=false;moved=false;if(p.type!=='mouse')lastTouch=performance.now();if(!s.opened.has(selected)){board.classList.add('holding');hold=setTimeout(()=>{hold=null;held=true;board.classList.remove('holding');act(selected,true)},450);}},
+      start(p){const cell=p.target.closest?.('[data-i]');if(!cell||finished())return false;selected=Number(cell.dataset.i);origin=p;held=false;moved=false;if(p.type!=='mouse')lastTouch=performance.now();if(!flagMode&&!s.opened.has(selected)){board.classList.add('holding');hold=setTimeout(()=>{hold=null;held=true;board.classList.remove('holding');act(selected,true)},450);}},
       move(p){if(!origin||Math.hypot(p.x-origin.x,p.y-origin.y)<12)return;moved=true;clearHold();},
-      end(p){clearHold();if(!p.cancelled&&!moved&&!held&&selected!==null)act(selected,false);selected=null;origin=null;}
+      end(p){clearHold();if(!p.cancelled&&!moved&&!held&&selected!==null)act(selected,flagMode);selected=null;origin=null;}
     });
-    board.onclick=e=>{if(e.detail!==0)return;const cell=e.target.closest('[data-i]');if(cell){const i=Number(cell.dataset.i);act(i,false);board.querySelector(`[data-i="${i}"]`)?.focus({preventScroll:true});}};
+    function mode(value){if(finished())return;contact.cancel();clearHold();flagMode=value;draw();}
+    revealButton.onclick=()=>mode(false);flagButton.onclick=()=>mode(!flagMode);
+    board.onclick=e=>{if(e.detail!==0)return;const cell=e.target.closest('[data-i]');if(cell){const i=Number(cell.dataset.i);act(i,flagMode);board.querySelector(`[data-i="${i}"]`)?.focus({preventScroll:true});}};
     board.oncontextmenu=e=>{e.preventDefault();if(performance.now()-lastTouch<1000)return;const cell=e.target.closest('[data-i]');if(cell)act(Number(cell.dataset.i),true);};
     board.onkeydown=e=>{if(e.key.toLowerCase()!=='f')return;const cell=e.target.closest('[data-i]');if(!cell)return;e.preventDefault();const i=Number(cell.dataset.i);act(i,true);board.querySelector(`[data-i="${i}"]`)?.focus({preventScroll:true});};
     draw();
-    return ()=>{contact.destroy();clearHold();};
+    return ()=>{contact.destroy();clearHold();revealButton.onclick=null;flagButton.onclick=null;board.onclick=null;board.oncontextmenu=null;board.onkeydown=null;};
   }
   window.ArcadiaMines={model,mount,neighbors};
 })();

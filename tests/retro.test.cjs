@@ -49,9 +49,9 @@ test('Montaje: iniciar, disparar, pausar, cambiar ventana y limpiar recursos',()
   const canvas=h.host.querySelector('canvas');h.pointer(canvas,'pointerdown',240,480);h.pointer(canvas,'pointerup',240,480);
   h.document.dispatch('keydown',{key:' ',target:{tagName:'CANVAS'}});
   for(let i=1;i<300;i++)h.advance(i*16.67);
-  const pause=h.host.querySelector('.arcade-pause');pause.onclick();assert.equal(pause.textContent,'▶ Continuar');
+  const pause=h.host.querySelector('.arcade-pause');pause.onclick();assert.equal(pause['aria-label'],'Continuar');
   h.advance(6000);const pausedScore=score;h.advance(7000);assert.equal(score,pausedScore);
-  pause.onclick();h.window.dispatch('blur');assert.equal(pause.textContent,'▶ Continuar');
+  pause.onclick();h.window.dispatch('blur');assert.equal(pause['aria-label'],'Continuar');
   stop();assert.equal(h.frames.size,0);
   for(const group of [h.document,h.window])for(const listeners of group.events.values())assert.equal(listeners.size,0);
 });

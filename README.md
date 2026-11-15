@@ -44,7 +44,15 @@ Documentación oficial: https://vercel.com/docs/builds y https://vercel.com/docs
 
 Toca y arrastra sobre el tablero para iniciar. En computadora, enfoca el tablero y usa el teclado. **P** o **Pausar** detiene una partida retro. Tocar el tablero permite continuar. Se pausa automáticamente al cambiar de ventana. El sonido está apagado inicialmente y se activa con el botón **Sonido**. **Reiniciar** comienza otra partida.
 
-Snake reconoce deslizamientos continuos en las cuatro direcciones, incluso sin levantar el dedo, y conserva hasta dos giros rápidos. 2048 realiza un movimiento por deslizamiento. En Buscaminas toca para descubrir y mantén pulsado medio segundo para marcar una bandera; un arrastre cancela la selección. Los controles direccionales y de disparo en pantalla se sustituyeron por gestos; se mantienen pausa, reinicio y sonido.
+Snake reconoce deslizamientos continuos en las cuatro direcciones, incluso sin levantar el dedo, y conserva hasta dos giros rápidos. 2048 realiza un movimiento por deslizamiento. En Buscaminas elige **Descubrir** o activa **Banderas** para marcar y desmarcar con un toque. El botón indica ON/OFF y el tablero cambia de color según el modo. También puedes mantener pulsado medio segundo, usar clic derecho o F sobre una casilla. Un arrastre cancela la selección; cambiar de modo cancela cualquier pulsación pendiente. Al reiniciar vuelve a Descubrir. Los controles direccionales y de disparo en pantalla se sustituyeron por gestos; se mantienen pausa, reinicio y sonido.
+
+Reflejos acepta las teclas que recibe el navegador, incluido Espacio aunque el foco esté en un botón. Escape cierra el juego. Mantener una tecla pulsada no repite la acción.
+
+## Iconos SVG
+
+La interfaz utiliza una selección de 30 iconos de **Lucide 0.468.0**, colección disponible en [All SVG Icons](https://allsvgicons.com/pack/lucide/). Se guardan localmente en `public/icons.js`: no requieren CDN, fuentes de iconos ni solicitudes externas durante el juego. Los sprites originales de los juegos arcade se conservan.
+
+Fuente de los SVG: [lucide-icons/lucide](https://github.com/lucide-icons/lucide/tree/0.468.0). La licencia original ISC y los avisos de copyright están en `public/licenses/lucide.txt`. Los iconos decorativos llevan `aria-hidden`; los controles mantienen etiquetas accesibles en español.
 
 ## Poderes de las naves
 
@@ -70,8 +78,11 @@ public/           HTML, CSS, JavaScript e icono que sirve Vercel
   app.js          Catálogo, favoritos, récords y los seis juegos iniciales
   screen.js       Pantalla de juego completa y ajuste al espacio disponible
   game-screen.css Vista inmersiva y controles compactos
+  icons.js/css    Iconos SVG locales y estilos compartidos
+  licenses/       Licencia de la colección Lucide
   input.js        Gestos de un dedo, con captura y cancelación
   mines.js        Buscaminas con pulsación prolongada y primera jugada segura
+  mines.css       Tablero, colores de números y selector de banderas
   snake.js        Snake con cola de giros y controles táctiles
   powerups.js     Cápsulas, armas temporales y escudo de las naves
   retro.js        Motor y cuatro juegos arcade nuevos

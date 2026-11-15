@@ -31,6 +31,7 @@
     host.innerHTML = '<div class="arcade-machine"><canvas width="480" height="560" tabindex="0" aria-label="Tablero arcade. Toca y arrastra para jugar; también puedes usar el teclado."></canvas><p class="arcade-hint"></p><div class="arcade-toolbar"><button class="arcade-pause" disabled>Ⅱ Pausar</button><button class="arcade-sound" aria-pressed="false">♪ Sonido: no</button></div></div>';
     const canvas = host.querySelector('canvas'), ctx = canvas.getContext('2d');
     const pause = host.querySelector('.arcade-pause'), sound = host.querySelector('.arcade-sound');
+    window.ArcadiaIcons.button(pause,'pause','Pausar');window.ArcadiaIcons.button(sound,'volume-x','Sonido: no');
     const state = {running:false,paused:false,ended:false,time:0,keys:new Set(),pointer:null,touching:false,points:0,lives:3,level:1,firePulse:0};
     let frame, last, audio, audible = false, disposed = false, lastHud = '', finalMessage = '', gesture;
     const listeners = [];
@@ -58,10 +59,10 @@
       if(state.ended)overlay(finalMessage,'REINICIAR PARA VOLVER A JUGAR');else if(!state.running)overlay('TOCA Y DESLIZA','O USA LAS FLECHAS DEL TECLADO');else if(state.paused)overlay('PAUSA','TOCA EL TABLERO PARA CONTINUAR');
       frame=requestAnimationFrame(loop);
     }
-    function setPaused(value) {if(!state.running||state.ended)return;gesture?.cancel();state.paused=value;state.keys.clear();state.pointer=null;state.touching=false;pause.textContent=value?'▶ Continuar':'Ⅱ Pausar';pause.setAttribute('aria-pressed',String(value));api.status(value?'En pausa. Toca el tablero para continuar.':'¡A jugar!');last=undefined;}
+    function setPaused(value) {if(!state.running||state.ended)return;gesture?.cancel();state.paused=value;state.keys.clear();state.pointer=null;state.touching=false;window.ArcadiaIcons.button(pause,value?'play':'pause',value?'Continuar':'Pausar');pause.setAttribute('aria-pressed',String(value));api.status(value?'En pausa. Toca el tablero para continuar.':'¡A jugar!');last=undefined;}
     function beginPlay(){if(state.ended)return false;if(state.paused)setPaused(false);if(!state.running){state.running=true;pause.disabled=false;api.status('¡A jugar!');last=undefined;}return true;}
     pause.onclick=()=>setPaused(!state.paused);
-    sound.onclick=async()=>{audible=!audible;if(audible){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!audio)audio=new Audio();await audio.resume();}catch{audible=false;api.status('El sonido no está disponible en este navegador.')}}if(disposed)return;sound.textContent='♪ Sonido: '+(audible?'sí':'no');sound.setAttribute('aria-pressed',String(audible));beep(620);};
+    sound.onclick=async()=>{audible=!audible;if(audible){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!audio)audio=new Audio();await audio.resume();}catch{audible=false;api.status('El sonido no está disponible en este navegador.')}}if(disposed)return;window.ArcadiaIcons.button(sound,audible?'volume-2':'volume-x','Sonido: '+(audible?'sí':'no'));sound.setAttribute('aria-pressed',String(audible));beep(620);};
     host.querySelector('.arcade-hint').textContent=id==='pong'?'Arrastra arriba y abajo desde cualquier parte del tablero.':id==='breakout'?'Arrastra a izquierda y derecha para mover tu paleta.':'Arrastra a izquierda y derecha. Disparas mientras mantienes el dedo apoyado.';
     const accepted=new Set(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s',' ']);
     listen(document,'keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.length===1?e.key.toLowerCase():e.key;if(e.target.tagName==='BUTTON'&&(k===' '||k==='Enter'))return;if(k==='p'){e.preventDefault();if(!e.repeat)setPaused(!state.paused);return;}if(accepted.has(k)||k==='Enter'){e.preventDefault();if(!beginPlay())return;canvas.focus({preventScroll:true});state.keys.add(k);state.pointer=null;}});
