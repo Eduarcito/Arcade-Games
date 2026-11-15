@@ -5,34 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname,'../public/retro.js'),'utf8');
 
-function harness() {
-  let seed=73, nextFrame=0;
-  const random=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
-  const frames=new Map(), lastBall={x:240,y:280};
-  const ctx={fillStyle:'',fillRect(x,y,w,h){for(const n of [x,y,w,h])assert.ok(Number.isFinite(n),'Coordenadas finitas');if(this.fillStyle==='#ffffff'||this.fillStyle==='#fff3cf'){lastBall.x=x+w/2;lastBall.y=y+h/2}},fillText(){}};
-  class Element {
-    constructor(){this.events=new Map();this.children=[];this.nodes=new Map();this.tagName='DIV';}
-    addEventListener(name, fn){if(!this.events.has(name))this.events.set(name,new Set());this.events.get(name).add(fn)}
-    removeEventListener(name, fn){this.events.get(name)?.delete(fn)}
-    dispatch(name,e={}){for(const fn of this.events.get(name)||[])fn({preventDefault(){},target:this,...e})}
-    querySelector(selector){if(!this.nodes.has(selector)){const node=new Element();node.tagName=selector==='canvas'?'CANVAS':'BUTTON';this.nodes.set(selector,node)}return this.nodes.get(selector)}
-    append(node){this.children.push(node)}
-    setAttribute(){}
-    setPointerCapture(){}
-    getContext(){return ctx}
-    getBoundingClientRect(){return {left:0,top:0,width:480,height:560}}
-    focus(){}
-  }
-  const document=new Element();document.createElement=()=>new Element();
-  const window=new Element();const math=Object.create(Math);math.random=random;
-  const sandbox={window,document,Math:math,Set,requestAnimationFrame(fn){const id=++nextFrame;frames.set(id,fn);return id},cancelAnimationFrame(id){frames.delete(id)}};
-  vm.createContext(sandbox);
-  // Expose model factories only inside this test VM, without changing the shipped API.
-  vm.runInContext(source.replace('window.ArcadiaRetro={games:collection,mount};','window.ArcadiaRetro={games:collection,mount,shooter,breaker,pong};'),sandbox);
-  const state={running:true,paused:false,ended:false,time:0,keys:new Set(),pointer:null,touching:false,points:0,lives:3,level:1,firePulse:0};
-  const env={ctx,state,beep(){},burst(){},finish(message){state.ended=true;state.message=message},points(n){state.points+=n},hud(){}};
-  return {api:window.ArcadiaRetro,env,lastBall,host:new Element(),document,window,frames,advance(now){const callbacks=[...frames.values()];frames.clear();callbacks.forEach(fn=>fn(now))}};
-}
+const {harness}=require('./support.cjs');
 
 test('Escuadrón e Invasores: los disparos destruyen enemigos y dan puntos',()=>{
   for(const invaders of [false,true]){
@@ -73,7 +46,7 @@ test('Montaje: iniciar, disparar, pausar, cambiar ventana y limpiar recursos',()
   const h=harness();let score='',record=0;
   const stop=h.api.mount('galaxy',h.host,{score(v){score=v},status(){},record(n){record=n}});
   h.advance(0);assert.match(score,/Puntos: 0/);
-  h.host.querySelector('.arcade-start').onclick();
+  const canvas=h.host.querySelector('canvas');h.pointer(canvas,'pointerdown',240,480);h.pointer(canvas,'pointerup',240,480);
   h.document.dispatch('keydown',{key:' ',target:{tagName:'CANVAS'}});
   for(let i=1;i<300;i++)h.advance(i*16.67);
   const pause=h.host.querySelector('.arcade-pause');pause.onclick();assert.equal(pause.textContent,'▶ Continuar');

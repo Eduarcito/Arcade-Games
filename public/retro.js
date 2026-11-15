@@ -21,18 +21,18 @@
     return `<svg viewBox="0 0 ${data[0].length} ${data.length}" class="retro-sprite" aria-hidden="true" shape-rendering="crispEdges">${data.map((row,y)=>[...row].map((v,x)=>v==='1'?`<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`:'').join('')).join('')}</svg>`;
   }
   const collection = [
-    {id:'galaxy',name:'Escuadrón Galáctico',category:'Retro 80s',desc:'Como Galaga: formaciones, picadas y láseres.',time:'3–10 min',color:'#111a32',tag:'NUEVO · NAVES',art:`<div class="retro-art">${icon('bug','#fb90b5')}${icon('ship','#a8f0ea')}</div>`,instructions:'Inspirado en Galaga. Muévete con ← → o A/D y mantén Espacio para disparar. En móvil, arrastra tu nave para moverte y disparar, o mantén los botones. P pausa la partida.'},
-    {id:'invaders',name:'Invasores Cósmicos',category:'Retro 80s',desc:'Defiende la Tierra antes de que desciendan.',time:'3–8 min',color:'#15291f',tag:'NUEVO · INVASORES',art:`<div class="retro-art invader-art">${icon('alien','#b9ed83')}${icon('alien','#b9ed83')}${icon('alien','#b9ed83')}</div>`,instructions:'Mueve la nave con ← → o A/D y dispara manteniendo Espacio. Elimina la formación antes de que llegue abajo. Las barreras absorben disparos. En móvil, arrastra la nave o usa los botones. P para pausar.'},
+    {id:'galaxy',name:'Escuadrón Galáctico',category:'Retro 80s',desc:'Como Galaga: formaciones, picadas y láseres.',time:'3–10 min',color:'#111a32',tag:'NUEVO · NAVES',art:`<div class="retro-art">${icon('bug','#fb90b5')}${icon('ship','#a8f0ea')}</div>`,instructions:'Inspirado en Galaga. Muévete con ← → o A/D y mantén Espacio para disparar. En móvil, toca y arrastra desde cualquier punto del tablero: la nave se mueve con tu dedo y dispara mientras lo mantienes apoyado. P pausa la partida.'},
+    {id:'invaders',name:'Invasores Cósmicos',category:'Retro 80s',desc:'Defiende la Tierra antes de que desciendan.',time:'3–8 min',color:'#15291f',tag:'NUEVO · INVASORES',art:`<div class="retro-art invader-art">${icon('alien','#b9ed83')}${icon('alien','#b9ed83')}${icon('alien','#b9ed83')}</div>`,instructions:'Mueve la nave con ← → o A/D y dispara manteniendo Espacio. Elimina la formación antes de que llegue abajo. Las barreras absorben disparos. En móvil, toca y arrastra: mueve la nave sin saltos y dispara mientras mantienes el dedo apoyado. P para pausar.'},
     {id:'breakout',name:'Neón Breaker',category:'Retro 80s',desc:'Rompe todos los bloques. Atrapa cada rebote.',time:'3–10 min',color:'#29203a',tag:'NUEVO · ROMPEBLOQUES',art:'<div class="brick-art">'+Array.from({length:18},(_,i)=>`<i style="background:${['#ed91b6','#eac27f','#a9e6e2'][Math.floor(i/6)]}"></i>`).join('')+'<b></b><span>●</span></div>',instructions:'Mueve la paleta con ← →, A/D, el ratón o el dedo. La bola sale automáticamente. Golpea con los extremos para cambiar su dirección. Tienes 3 vidas; completa niveles y supera tu récord. P pausa.'},
     {id:'pong',name:'Pong Club',category:'Retro 80s',desc:'El duelo de paletas que lo empezó todo.',time:'2–5 min',color:'#19283a',tag:'NUEVO · DUELO',art:'<div class="pong-art"><i></i><b></b><span></span><em></em></div>',instructions:'Tu paleta está a la izquierda. Usa ↑ ↓, W/S, el ratón o el dedo. Gana quien llegue primero a 7 puntos. Cambia el ángulo del rebote con los extremos de la paleta. P para pausar.'}
   ];
 
   function mount(id, host, api) {
-    host.innerHTML = '<div class="arcade-machine"><canvas width="480" height="560" tabindex="0" role="img" aria-label="Tablero arcade"></canvas><div class="arcade-toolbar"><button class="arcade-start">▶ Comenzar</button><button class="arcade-pause" disabled>Ⅱ Pausar</button><button class="arcade-sound" aria-pressed="false">♪ Sonido: no</button></div><div class="arcade-controls"></div><p class="arcade-hint"></p></div>';
+    host.innerHTML = '<div class="arcade-machine"><canvas width="480" height="560" tabindex="0" aria-label="Tablero arcade. Toca y arrastra para jugar; también puedes usar el teclado."></canvas><p class="arcade-hint"></p><div class="arcade-toolbar"><button class="arcade-pause" disabled>Ⅱ Pausar</button><button class="arcade-sound" aria-pressed="false">♪ Sonido: no</button></div></div>';
     const canvas = host.querySelector('canvas'), ctx = canvas.getContext('2d');
-    const start = host.querySelector('.arcade-start'), pause = host.querySelector('.arcade-pause'), sound = host.querySelector('.arcade-sound');
+    const pause = host.querySelector('.arcade-pause'), sound = host.querySelector('.arcade-sound');
     const state = {running:false,paused:false,ended:false,time:0,keys:new Set(),pointer:null,touching:false,points:0,lives:3,level:1,firePulse:0};
-    let frame, last, audio, audible = false, disposed = false, lastHud = '', finalMessage = '';
+    let frame, last, audio, audible = false, disposed = false, lastHud = '', finalMessage = '', gesture;
     const listeners = [];
     const stars = Array.from({length:65},()=>({x:Math.random()*W,y:Math.random()*H,v:10+Math.random()*27,size:Math.random()<.85?1:2}));
     const effects = [];
@@ -55,27 +55,28 @@
       background(dt);
       if(state.running&&!state.paused&&!state.ended){state.time+=dt;state.firePulse=Math.max(0,state.firePulse-dt);game.update(dt);for(const p of effects){p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt}}
       game.draw();for(let i=effects.length-1;i>=0;i--){const p=effects[i];if(p.life<=0){effects.splice(i,1);continue}ctx.globalAlpha=p.life*2;ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,3,3)}ctx.globalAlpha=1;
-      if(state.ended)overlay(finalMessage,'REINICIAR PARA VOLVER A JUGAR');else if(!state.running)overlay('¿LISTO, JUGADOR 1?','PULSA COMENZAR');else if(state.paused)overlay('PAUSA','PULSA CONTINUAR O LA TECLA P');
+      if(state.ended)overlay(finalMessage,'REINICIAR PARA VOLVER A JUGAR');else if(!state.running)overlay('TOCA Y DESLIZA','O USA LAS FLECHAS DEL TECLADO');else if(state.paused)overlay('PAUSA','TOCA EL TABLERO PARA CONTINUAR');
       frame=requestAnimationFrame(loop);
     }
-    function setPaused(value) {if(!state.running||state.ended)return;state.paused=value;state.keys.clear();state.pointer=null;state.touching=false;pause.textContent=value?'▶ Continuar':'Ⅱ Pausar';api.status(value?'En pausa.':'¡A jugar!');last=undefined;}
-    start.onclick=()=>{state.running=true;start.hidden=true;pause.disabled=false;canvas.focus({preventScroll:true});api.status('¡A jugar!');last=undefined;};
+    function setPaused(value) {if(!state.running||state.ended)return;gesture?.cancel();state.paused=value;state.keys.clear();state.pointer=null;state.touching=false;pause.textContent=value?'▶ Continuar':'Ⅱ Pausar';api.status(value?'En pausa. Toca el tablero para continuar.':'¡A jugar!');last=undefined;}
+    function beginPlay(){if(state.ended)return false;if(state.paused)setPaused(false);if(!state.running){state.running=true;pause.disabled=false;api.status('¡A jugar!');last=undefined;}return true;}
     pause.onclick=()=>setPaused(!state.paused);
     sound.onclick=async()=>{audible=!audible;if(audible){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!audio)audio=new Audio();await audio.resume();}catch{audible=false;api.status('El sonido no está disponible en este navegador.')}}if(disposed)return;sound.textContent='♪ Sonido: '+(audible?'sí':'no');sound.setAttribute('aria-pressed',String(audible));beep(620);};
-    const controls=host.querySelector('.arcade-controls');
-    const labels=id==='pong'?[['↑','ArrowUp','Subir'],['↓','ArrowDown','Bajar']]:[['←','ArrowLeft','Izquierda'],...(id==='galaxy'||id==='invaders'?[['●',' ','Disparar']]:[]),['→','ArrowRight','Derecha']];
-    labels.forEach(([text,key,label])=>{const b=document.createElement('button');b.textContent=text;b.setAttribute('aria-label',label);b.className=key===' '?'fire-button':'';controls.append(b);listen(b,'pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);state.keys.add(key);state.pointer=null});const release=()=>state.keys.delete(key);listen(b,'pointerup',release);listen(b,'pointercancel',release);listen(b,'lostpointercapture',release);listen(b,'keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();state.keys.add(key)}});listen(b,'keyup',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();release()}});listen(b,'click',()=>{if(key===' ')state.firePulse=.2;});});
-    host.querySelector('.arcade-hint').textContent=id==='pong'?'↑ ↓ / W S · Arrastra para mover tu paleta':id==='breakout'?'← → / A D · Ratón o dedo para mover la paleta':'← → / A D + ESPACIO · Mantén ● para disparar';
+    host.querySelector('.arcade-hint').textContent=id==='pong'?'Arrastra arriba y abajo desde cualquier parte del tablero.':id==='breakout'?'Arrastra a izquierda y derecha para mover tu paleta.':'Arrastra a izquierda y derecha. Disparas mientras mantienes el dedo apoyado.';
     const accepted=new Set(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s',' ']);
-    listen(document,'keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.length===1?e.key.toLowerCase():e.key;if(k==='p'){e.preventDefault();if(!e.repeat)setPaused(!state.paused);return;}if(accepted.has(k)){if(e.target.tagName==='BUTTON'&&k===' ')return;e.preventDefault();state.keys.add(k);state.pointer=null;}});
+    listen(document,'keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.length===1?e.key.toLowerCase():e.key;if(e.target.tagName==='BUTTON'&&(k===' '||k==='Enter'))return;if(k==='p'){e.preventDefault();if(!e.repeat)setPaused(!state.paused);return;}if(accepted.has(k)||k==='Enter'){e.preventDefault();if(!beginPlay())return;canvas.focus({preventScroll:true});state.keys.add(k);state.pointer=null;}});
     listen(document,'keyup',e=>state.keys.delete(e.key.length===1?e.key.toLowerCase():e.key));
-    function locate(e){const r=canvas.getBoundingClientRect();state.pointer={x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
-    listen(canvas,'pointerdown',e=>{e.preventDefault();canvas.focus({preventScroll:true});canvas.setPointerCapture(e.pointerId);locate(e);state.touching=true});
-    listen(canvas,'pointermove',e=>{if(state.touching||e.pointerType==='mouse')locate(e)});
-    listen(canvas,'pointerup',()=>state.touching=false);listen(canvas,'pointercancel',()=>{state.touching=false;state.pointer=null});listen(canvas,'lostpointercapture',()=>state.touching=false);
+    let previousContact;
+    gesture=window.ArcadiaInput.track(canvas,{
+      start(p){if(!beginPlay())return false;canvas.focus({preventScroll:true});state.keys.clear();state.pointer=game.control();previousContact=p;state.touching=true;},
+      move(p){if(state.paused||state.ended||!state.touching)return;const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const base=state.pointer||game.control();state.pointer={x:clamp(base.x+(p.x-previousContact.x)*W/r.width,id==='breakout'?48:20,W-(id==='breakout'?48:20)),y:clamp(base.y+(p.y-previousContact.y)*H/r.height,id==='pong'?70:0,id==='pong'?H-60:H)};previousContact=p;},
+      end(p){state.touching=false;previousContact=null;if(p.cancelled){state.pointer=null;state.keys.clear();}}
+    });
+    // Desktop hover control remains available for the paddle games.
+    listen(canvas,'pointermove',e=>{if(e.pointerType!=='mouse'||state.touching||!state.running||state.paused||state.ended||!['pong','breakout'].includes(id))return;const r=canvas.getBoundingClientRect();state.pointer={x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};});
     listen(window,'blur',()=>setPaused(true));listen(document,'visibilitychange',()=>{if(document.hidden)setPaused(true)});
-    api.status('Pulsa Comenzar cuando estés listo.');frame=requestAnimationFrame(loop);
-    return ()=>{disposed=true;cancelAnimationFrame(frame);listeners.forEach(fn=>fn());state.keys.clear();if(audio)audio.close().catch(()=>{});};
+    api.status('Toca y arrastra sobre el tablero para comenzar.');frame=requestAnimationFrame(loop);
+    return ()=>{disposed=true;cancelAnimationFrame(frame);gesture.destroy();listeners.forEach(fn=>fn());state.keys.clear();if(audio)audio.close().catch(()=>{});};
   }
 
   function shooter(e, invaders) {
@@ -110,7 +111,7 @@
       if(!enemies.length){ctx.fillStyle='#d7ed9a';ctx.font='bold 21px monospace';ctx.textAlign='center';ctx.fillText('¡OLEADA SUPERADA!',240,260);ctx.textAlign='left';}
       hud(`Puntos: ${s.points} · Vidas: ${s.lives} · Oleada: ${s.level}`);
     }
-    return {update,draw};
+    return {update,draw,control:()=>({x:player.x,y:player.y})};
   }
 
   function breaker(e){
@@ -124,7 +125,7 @@
       if(serve>0){serve-=dt;ball.x=paddle.x;return;}
       for(let step=0;step<3;step++){const oldX=ball.x,oldY=ball.y;ball.x+=ball.vx*dt/3;ball.y+=ball.vy*dt/3;
         if(ball.x<ball.r){ball.x=ball.r;ball.vx=Math.abs(ball.vx);beep(180)}if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);beep(180)}if(ball.y<30){ball.y=30;ball.vy=Math.abs(ball.vy);beep(180)}
-        if(ball.vy>0&&ball.y+ball.r>=paddle.y-paddle.h/2&&oldY+ball.r<=paddle.y+paddle.h/2&&Math.abs(ball.x-paddle.x)<paddle.w/2+ball.r){const offset=clamp((ball.x-paddle.x)/(paddle.w/2),-.95,.95);const speed=Math.min(Math.hypot(ball.vx,ball.vy)+7,470);ball.vx=speed*Math.sin(offset*1.05);ball.vy=-speed*Math.cos(offset*1.05);ball.y=paddle.y-paddle.h/2-ball.r;beep(420);}
+        if(ball.vy>0&&ball.y+ball.r>=paddle.y-paddle.h/2&&oldY+ball.r<=paddle.y+paddle.h/2&&Math.abs(ball.x-paddle.x)<paddle.w/2+ball.r){const offset=clamp((ball.x-paddle.x)/(paddle.w/2),-.95,.95);const speed=Math.min(Math.hypot(ball.vx,ball.vy)+7,470);const horizontal=speed*Math.sin(offset*1.05);ball.vx=Math.abs(horizontal)<45?(ball.vx<0?-45:45):horizontal;ball.vy=-Math.sqrt(speed*speed-ball.vx*ball.vx);ball.y=paddle.y-paddle.h/2-ball.r;beep(420);}
         const hit=bricks.find(b=>Math.abs(ball.x-b.x)<b.w/2+ball.r&&Math.abs(ball.y-b.y)<b.h/2+ball.r);
         if(hit){bricks=bricks.filter(b=>b!==hit);if(oldX+ball.r<=hit.x-hit.w/2||oldX-ball.r>=hit.x+hit.w/2)ball.vx*=-1;else ball.vy*=-1;points((5-hit.row)*10);burst(hit.x,hit.y,colors[hit.row]);}
         if(ball.y>H+ball.r){s.lives--;if(s.lives<=0)finish('GAME OVER');else resetBall();break;}
@@ -132,7 +133,7 @@
       }
     }
     function draw(){for(const b of bricks){ctx.fillStyle=colors[b.row];ctx.fillRect(b.x-b.w/2,b.y-b.h/2,b.w,b.h);ctx.fillStyle='#ffffff30';ctx.fillRect(b.x-b.w/2,b.y-b.h/2,b.w,3);}ctx.fillStyle='#a7f1e7';ctx.fillRect(paddle.x-paddle.w/2,paddle.y-paddle.h/2,paddle.w,paddle.h);ctx.fillStyle='#ffffff';ctx.fillRect(ball.x-ball.r,ball.y-ball.r,ball.r*2,ball.r*2);hud(`Puntos: ${s.points} · Vidas: ${s.lives} · Nivel: ${s.level}`);}
-    return {update,draw};
+    return {update,draw,control:()=>({x:paddle.x,y:paddle.y})};
   }
 
   function pong(e){
@@ -145,7 +146,7 @@
       }
     }
     function draw(){ctx.fillStyle='#25374c';for(let y=35;y<H-20;y+=24)ctx.fillRect(W/2-2,y,4,12);ctx.font='bold 45px monospace';ctx.textAlign='center';ctx.fillStyle='#a3e6e1';ctx.fillText(String(playerScore),W/2-65,72);ctx.fillStyle='#e8a5c1';ctx.fillText(String(cpuScore),W/2+65,72);ctx.font='11px monospace';ctx.fillText('CPU',W/2+65,94);ctx.fillStyle='#a3e6e1';ctx.fillText('TÚ',W/2-65,94);ctx.textAlign='left';ctx.fillRect(left.x-left.w/2,left.y-left.h/2,left.w,left.h);ctx.fillStyle='#e8a5c1';ctx.fillRect(right.x-right.w/2,right.y-right.h/2,right.w,right.h);ctx.fillStyle='#fff3cf';ctx.fillRect(ball.x-ball.r,ball.y-ball.r,ball.r*2,ball.r*2);hud(`Tú: ${playerScore} · CPU: ${cpuScore} · Primero a 7`);}
-    return {update,draw};
+    return {update,draw,control:()=>({x:left.x,y:left.y})};
   }
   window.ArcadiaRetro={games:collection,mount};
 })();

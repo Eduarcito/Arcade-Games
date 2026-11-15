@@ -38,17 +38,22 @@ Documentación oficial: https://vercel.com/docs/builds y https://vercel.com/docs
 
 | Juego | Teclado | Ratón / pantalla táctil |
 | --- | --- | --- |
-| Escuadrón e Invasores | Flechas o A/D; mantener Espacio para disparar | Arrastrar sobre el tablero para mover y disparar, o mantener los botones |
+| Escuadrón e Invasores | Flechas o A/D; mantener Espacio para disparar | Arrastrar desde cualquier punto para mover sin saltos; disparo al mantener el dedo apoyado |
 | Neón Breaker | Flechas o A/D | Mover ratón o arrastrar la paleta |
 | Pong Club | Flechas arriba/abajo o W/S | Mover ratón o arrastrar verticalmente |
 
-Pulsa **Comenzar** para iniciar. **P** o **Pausar** detiene una partida retro. Se pausa automáticamente al cambiar de ventana. El sonido está apagado inicialmente y se activa con el botón **Sonido**. **Reiniciar** comienza otra partida.
+Toca y arrastra sobre el tablero para iniciar. En computadora, enfoca el tablero y usa el teclado. **P** o **Pausar** detiene una partida retro. Tocar el tablero permite continuar. Se pausa automáticamente al cambiar de ventana. El sonido está apagado inicialmente y se activa con el botón **Sonido**. **Reiniciar** comienza otra partida.
+
+Snake reconoce deslizamientos continuos en las cuatro direcciones, incluso sin levantar el dedo, y conserva hasta dos giros rápidos. 2048 realiza un movimiento por deslizamiento. En Buscaminas toca para descubrir y mantén pulsado medio segundo para marcar una bandera; un arrastre cancela la selección. Los controles direccionales y de disparo en pantalla se sustituyeron por gestos; se mantienen pausa, reinicio y sonido.
 
 ## Estructura
 
 ```text
 public/           HTML, CSS, JavaScript e icono que sirve Vercel
   app.js          Catálogo, favoritos, récords y los seis juegos iniciales
+  input.js        Gestos de un dedo, con captura y cancelación
+  mines.js        Buscaminas con pulsación prolongada y primera jugada segura
+  snake.js        Snake con cola de giros y controles táctiles
   retro.js        Motor y cuatro juegos arcade nuevos
 scripts/serve.cjs  Servidor local sin dependencias
 tests/            Pruebas de las reglas y del ciclo de vida de los juegos
