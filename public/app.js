@@ -23,7 +23,7 @@ function showRecord(){const r=saved.records[current.id];if(['mines','ttt'].inclu
 function record(n,lower=false){const r=saved.records[current.id];if(r===undefined||(lower?n<r:n>r)){saved.records[current.id]=n;persist();showRecord()}}
 function status(s){$('#status').textContent=s;window.ArcadiaScreen.status(s,current?.id)}function score(s){$('#score').textContent=s}
 $('#close-game').onclick=()=>{modal.close();window.ArcadiaScreen.leave()};modal.addEventListener('close',()=>{if(!modal.open){dispose();window.ArcadiaScreen.leave()}});modal.addEventListener('click',e=>{if(e.target===modal){const r=modal.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)modal.close()}});$('#restart').onclick=()=>openGame(current.id);
-document.addEventListener('keydown',e=>{if(modal.open){if(e.key!=='Escape')onKey(e)}else if(e.key==='/'&&document.activeElement!==$('#search')){e.preventDefault();$('#search').focus()}});
+document.addEventListener('keydown',e=>{if(modal.open){if(e.key!=='Escape'||current?.id==='reaction')onKey(e)}else if(e.key==='/'&&document.activeElement!==$('#search')){e.preventDefault();$('#search').focus()}});
 function startSnake(){const game=window.ArcadiaSnake.mount($('#play-area'),{score,status,record});onKey=game.key;cleanup=game.destroy;}
 function mergeLine(line){const values=line.filter(Boolean),out=[];let gain=0;for(let i=0;i<values.length;i++){if(values[i]===values[i+1]){const n=values[i]*2;out.push(n);gain+=n;i++}else out.push(values[i])}while(out.length<4)out.push(0);return {line:out,gain}}
 function start2048(){let board=Array(16).fill(0),points=0,won=false,ended=false;const el=document.createElement('div');el.className='board board2048';el.ariaLabel='Tablero 2048';$('#play-area').append(el);function add(){const empty=board.map((n,i)=>n?null:i).filter(n=>n!==null);if(empty.length)board[empty[Math.floor(Math.random()*empty.length)]]=Math.random()<.9?2:4}function draw(){el.innerHTML=board.map(n=>`<div class="number-cell" style="background:${n?['#eceddb','#eee4c8','#efd29f','#e6b777','#d89761','#b17c50','#779750','#5e7c3f'][Math.min(Math.log2(n)-1,7)]:'#e5e8dc'};color:${n>=32?'#fff':'#584e37'};font-size:${n>=1024?21:27}px">${n||''}</div>`).join('');score('Puntos: '+points)}function move(key){if(ended)return;const old=board.join(',');let gain=0;for(let n=0;n<4;n++){let ids=key==='ArrowLeft'?[0,1,2,3].map(i=>n*4+i):key==='ArrowRight'?[3,2,1,0].map(i=>n*4+i):key==='ArrowUp'?[0,1,2,3].map(i=>i*4+n):[3,2,1,0].map(i=>i*4+n);const merged=mergeLine(ids.map(i=>board[i]));gain+=merged.gain;ids.forEach((id,i)=>board[id]=merged.line[i])}if(old!==board.join(',')){points+=gain;add();record(points);draw();if(!won&&board.includes(2048)){won=true;status('¡Llegaste a 2048! Puedes seguir jugando.')}if(!board.includes(0)&&!board.some((v,i)=>(i%4<3&&v===board[i+1])||(i<12&&v===board[i+4]))){ended=true;status('No quedan movimientos. ¡Inténtalo de nuevo!')}}}onKey=e=>{if(e.key.startsWith('Arrow')){e.preventDefault();move(e.key)}};const gesture=window.ArcadiaInput.swipe(el,move);cleanup=()=>gesture.destroy();add();add();draw();status('Cada movimiento cuenta.')}
@@ -50,18 +50,19 @@ function startReaction(){
     }
   };
   onKey=e=>{
-    // Conserva la navegación, los atajos del navegador y los controles del juego.
-    if(document.hidden||e.defaultPrevented||e.isComposing||e.key==='Tab'||e.key==='Escape'||e.ctrlKey||e.altKey||e.metaKey)return;
-    const target=e.target;
-    if(target?.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target?.tagName))return;
-    if(target?.tagName==='BUTTON'&&target!==btn&&(e.key==='Enter'||e.key===' '))return;
-    e.preventDefault(); // Evita scroll y el clic nativo de Espacio/Enter en el panel.
+    if(document.hidden)return;
+    e.preventDefault(); // Espacio/Enter juegan incluso con el foco en cerrar o reiniciar.
+    if(e.key==='Escape'){$('#close-game').onclick();return;}
     if(!e.repeat)react();
   };
   const contact=window.ArcadiaInput.track(btn,{start(){react()}});
   btn.onclick=e=>{if(e.detail===0)react()};
   function hidden(){if(document.hidden&&(phase==='waiting'||phase==='ready')){clearTimeout(timeout);phase='idle';btn.className='reaction';btn.textContent=prompt;status('Ronda cancelada al cambiar de pestaña.')}}
+  // Algunos navegadores consumen Escape al salir de la pantalla completa nativa.
+  let wasFullscreen=document.fullscreenElement===$('#game-surface');
+  function fullscreenChanged(){const fullscreen=document.fullscreenElement===$('#game-surface');if(wasFullscreen&&!fullscreen){$('#close-game').onclick();return;}wasFullscreen=fullscreen;}
   document.addEventListener('visibilitychange',hidden);
-  cleanup=()=>{contact.destroy();document.removeEventListener('visibilitychange',hidden)};
+  document.addEventListener('fullscreenchange',fullscreenChanged);
+  cleanup=()=>{contact.destroy();document.removeEventListener('visibilitychange',hidden);document.removeEventListener('fullscreenchange',fullscreenChanged)};
 }
 render();

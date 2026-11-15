@@ -43,7 +43,7 @@ test('Reflejos: salida anticipada, cambio de pestaña y reinicio no dejan rondas
 });
 
 test('Reflejos: letras, números, flechas, Enter y Espacio miden al presionar y no al soltar',()=>{
-  for(const key of ['a','7','ArrowLeft','Enter',' ','Shift','/']){
+  for(const key of ['a','7','ArrowLeft','Enter',' ','Shift','/','Tab','Control','Alt','Meta','CapsLock','Backspace','F2']){
     const h=harness({app:true});open(h,'reaction');const panel=get(h,'#play-area').children[0];
     const press=(repeat=false)=>h.document.dispatch('keydown',{key,repeat,target:panel});
     assert.equal(press().defaultPrevented,true);assert.match(panel.textContent,/Espera/);
@@ -65,12 +65,32 @@ test('Reflejos: teclado detecta una salida anticipada y se desactiva al cerrar o
   open(h,'reaction');press();assert.equal(h.timers.size,1,'Reabrir no duplica la entrada');
 });
 
-test('Reflejos conserva navegación, atajos, campos editables y activación de cerrar/reiniciar',()=>{
-  const h=harness({app:true});open(h,'reaction');const panel=get(h,'#play-area').children[0];
-  for(const options of [{key:'Tab'},{key:'Escape'},{key:'r',ctrlKey:true},{key:'l',metaKey:true},{key:'ArrowLeft',altKey:true},{key:'a',isComposing:true},{key:'a',target:{tagName:'INPUT'}},{key:'a',target:{isContentEditable:true}},{key:'Enter',target:get(h,'#close-game')},{key:' ',target:get(h,'#restart')}]){
-    const e=h.document.dispatch('keydown',{target:panel,...options});assert.equal(e.defaultPrevented,undefined);assert.equal(h.timers.size,0);
+test('Reflejos: Espacio y Enter reaccionan con foco en cualquier botón; modificadores también cuentan',()=>{
+  const h=harness({app:true});
+  for(const options of [{key:'r',ctrlKey:true},{key:'l',metaKey:true},{key:'ArrowLeft',altKey:true},...['#close-game','#restart'].flatMap(selector=>[' ','Enter'].map(key=>({key,target:get(h,selector)})))]){
+    open(h,'reaction');const panel=get(h,'#play-area').children[0];
+    const e=h.document.dispatch('keydown',{target:panel,...options});assert.equal(e.defaultPrevented,true);assert.equal(h.timers.size,1);assert.equal(get(h,'#game-modal').open,true);
+    const green=[...h.timers.values()][0].at;h.advance(green+123);
+    h.document.dispatch('keydown',{target:panel,...options});assert.match(panel.textContent,/123 ms/);assert.equal(get(h,'#game-modal').open,true);assert.equal(h.timers.size,0);
   }
-  h.document.hidden=true;h.document.dispatch('keydown',{key:'a',target:panel});assert.equal(h.timers.size,0);
+  h.document.hidden=true;h.document.dispatch('keydown',{key:'a'});assert.equal(h.timers.size,0);
+});
+
+test('Reflejos: Escape cierra sin puntuar y cancela la ronda pendiente',()=>{
+  for(const ready of [false,true]){
+    const h=harness({app:true});open(h,'reaction');h.document.dispatch('keydown',{key:' '});
+    if(ready)h.advance([...h.timers.values()][0].at+100);
+    const e=h.document.dispatch('keydown',{key:'Escape'});assert.equal(e.defaultPrevented,true);assert.equal(get(h,'#game-modal').open,false);
+    assert.equal(h.eval('saved.records.reaction'),undefined);assert.equal(h.timers.size,0);assert.equal(h.document.documentElement.classList.contains('game-open'),false);
+  }
+});
+
+test('Reflejos cierra también si el navegador consume Escape al abandonar fullscreen',()=>{
+  const h=harness({app:true});open(h,'reaction');
+  h.document.fullscreenElement=get(h,'#game-surface');h.document.dispatch('fullscreenchange');h.document.dispatch('keydown',{key:' '});
+  h.document.fullscreenElement=null;h.document.dispatch('fullscreenchange');
+  assert.equal(get(h,'#game-modal').open,false);assert.equal(h.timers.size,0);
+  assert.equal(h.document.events.get('fullscreenchange').size,0);
 });
 test('Buscaminas y Tres en raya mantienen el contador de victorias al actualizar récords',()=>{
   const h=harness({app:true});open(h,'mines');assert.equal(get(h,'#record').textContent,'Victorias: 0');h.eval('record(1)');assert.equal(get(h,'#record').textContent,'Victorias: 1');open(h,'ttt');h.eval('record(2)');assert.equal(get(h,'#record').textContent,'Victorias: 2');
